@@ -35,7 +35,7 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
   }, [graph.nodes]);
 
   const viewBox = useMemo(() => {
-    const pad = 12;
+    const pad = 15; // Increased padding
     const w = Math.max(1, bounds.maxX - bounds.minX);
     const h = Math.max(1, bounds.maxY - bounds.minY);
     return `${bounds.minX - pad} ${bounds.minY - pad} ${w + pad * 2} ${h + pad * 2}`;
@@ -43,15 +43,17 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
 
   const colors = useMemo(() => {
     return {
-      line: "rgba(255,255,255,0.25)",
+      line: "rgba(255,255,255,0.35)", // Increased visibility
       linePath: getCSSVar("--cellPath"),
-      node: "rgba(255,255,255,0.4)",
-      visited: getCSSVar("--cellVisited"),
-      frontier: getCSSVar("--cellFrontier"),
-      current: getCSSVar("--cellCurrent"),
-      path: getCSSVar("--cellPath"),
-      good: getCSSVar("--good"),
-      bad: getCSSVar("--bad")
+      node: "rgba(255,255,255,0.75)", // Much more visible default
+      visited: "rgba(124, 92, 255, 0.8)", // More opaque visited
+      frontier: "rgba(255, 212, 59, 0.85)", // More opaque frontier
+      current: "rgba(64, 192, 87, 0.9)", // More opaque current
+      path: "rgba(0, 212, 255, 0.85)", // More opaque path
+      good: "#40c057", // Solid green for start
+      bad: "#ff6b6b", // Solid red for goal
+      nodeStroke: "rgba(0,0,0,0.8)", // Darker stroke for better contrast
+      importantStroke: "rgba(255,255,255,0.9)" // White stroke for start/goal
     };
   }, []);
 
@@ -91,7 +93,7 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             height: "min(520px, 60vh)",
             borderRadius: 14,
             border: "1px solid rgba(255,255,255,0.08)",
-            background: "rgba(255,255,255,0.05)",
+            background: "rgba(255,255,255,0.03)", // Slightly darker background for better contrast
             display: "block"
           }}
         >
@@ -101,10 +103,12 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             const b = nodeAt.get(e.to);
             if (!a || !b) return null;
             // Only draw each undirected edge once if data contains both directions.
-            if (graph.directed && e.from > e.to) return null;
-            // Thinner edges for large graphs but still visible
+            if (!graph.directed && e.from > e.to) return null;
+            
+            // Better edge visibility based on graph size
             const nodeCount = graph.nodes.length;
-            const edgeWidth = nodeCount > 50 ? 1 : nodeCount > 20 ? 1.2 : 2;
+            const edgeWidth = nodeCount > 100 ? 1.5 : nodeCount > 50 ? 2 : nodeCount > 20 ? 2.5 : 3;
+            
             return (
               <line
                 key={idx}
@@ -114,6 +118,42 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
                 y2={b.y}
                 stroke={colors.line}
                 strokeWidth={edgeWidth}
+                opacity={0.8}
+              />
+            );
+          })}
+
+          {/* Path edges (highlight the path) */}
+          {step?.path && step.path.length > 1 && graph.edges.map((e, idx) => {
+            const a = nodeAt.get(e.from);
+            const b = nodeAt.get(e.to);
+            if (!a || !b) return null;
+            
+            // Check if this edge is part of the path
+            const isPathEdge = step.path!.some((coord, i) => {
+              if (i === 0) return false;
+              const prevCoord = step.path![i - 1];
+              return (
+                (coord.x === a.x && coord.y === a.y && prevCoord.x === b.x && prevCoord.y === b.y) ||
+                (coord.x === b.x && coord.y === b.y && prevCoord.x === a.x && prevCoord.y === a.y)
+              );
+            });
+            
+            if (!isPathEdge) return null;
+            
+            const nodeCount = graph.nodes.length;
+            const pathWidth = nodeCount > 100 ? 3 : nodeCount > 50 ? 4 : nodeCount > 20 ? 5 : 6;
+            
+            return (
+              <line
+                key={`path-${idx}`}
+                x1={a.x}
+                y1={a.y}
+                x2={b.x}
+                y2={b.y}
+                stroke={colors.path}
+                strokeWidth={pathWidth}
+                opacity={0.9}
               />
             );
           })}
@@ -122,51 +162,120 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
           {graph.nodes.map((n) => {
             const k = n.id;
             let fill = colors.node;
+            let stroke = colors.nodeStroke;
+            let strokeWidth = 1.5;
+            
+            // Apply state-based colors with priority
             if (visited.has(k)) fill = colors.visited;
             if (frontierKeys.has(k)) fill = colors.frontier;
             if (pathCoordSet.has(`${n.at.x},${n.at.y}`)) fill = colors.path;
-            if (closed.has(k)) fill = fill;
+            if (closed.has(k)) fill = fill; // Keep current color for closed
             if (currentKey === k) fill = colors.current;
-            if (k === startKey) fill = colors.good;
-            if (k === goalKey) fill = colors.bad;
+            
+            // Special styling for start/goal
+            if (k === startKey) {
+              fill = colors.good;
+              stroke = colors.importantStroke;
+              strokeWidth = 2.5;
+            }
+            if (k === goalKey) {
+              fill = colors.bad;
+              stroke = colors.importantStroke;
+              strokeWidth = 2.5;
+            }
 
-            const stroke = k === startKey || k === goalKey ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.4)";
             const label = n.label ?? n.id;
 
-            // Scale node size based on graph size - smaller for large graphs but still visible
+            // Improved node sizing - larger and more visible
             const nodeCount = graph.nodes.length;
-            const nodeRadius = nodeCount > 50 ? 3.5 : nodeCount > 20 ? 4.5 : 5.5;
-            const strokeWidth = nodeCount > 50 ? 1.3 : nodeCount > 20 ? 1.4 : 1.5;
-            const fontSize = nodeCount > 50 ? 7 : nodeCount > 20 ? 8 : 9;
-            const labelOffset = nodeCount > 50 ? 5 : nodeCount > 20 ? 6 : 9;
+            const nodeRadius = nodeCount > 100 ? 5 : nodeCount > 50 ? 6 : nodeCount > 20 ? 7 : 8;
+            const fontSize = nodeCount > 100 ? 8 : nodeCount > 50 ? 9 : nodeCount > 20 ? 10 : 11;
+            const labelOffset = nodeRadius + 3;
             
-            // Only show labels for important nodes (start, goal, or nodes with custom labels) in large graphs
-            const showLabel = nodeCount <= 50 || k === startKey || k === goalKey || n.label !== n.id || n.explanation;
+            // Show labels more intelligently
+            const isImportant = k === startKey || k === goalKey || n.label !== n.id || n.explanation;
+            const showLabel = nodeCount <= 80 || isImportant;
             
             return (
               <g key={n.id} onClick={() => onNodeClick(n.id)} style={{ cursor: drawMode === "start" || drawMode === "goal" ? "pointer" : "default" }}>
-                <circle cx={n.at.x} cy={n.at.y} r={nodeRadius} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+                {/* Node shadow for better visibility */}
+                <circle 
+                  cx={n.at.x + 1} 
+                  cy={n.at.y + 1} 
+                  r={nodeRadius} 
+                  fill="rgba(0,0,0,0.3)" 
+                  opacity={0.5}
+                />
+                {/* Main node */}
+                <circle 
+                  cx={n.at.x} 
+                  cy={n.at.y} 
+                  r={nodeRadius} 
+                  fill={fill} 
+                  stroke={stroke} 
+                  strokeWidth={strokeWidth}
+                  opacity={0.95}
+                />
+                {/* Inner highlight for start/goal */}
+                {(k === startKey || k === goalKey) && (
+                  <circle 
+                    cx={n.at.x} 
+                    cy={n.at.y} 
+                    r={nodeRadius - 2} 
+                    fill="none" 
+                    stroke="rgba(255,255,255,0.6)" 
+                    strokeWidth={1}
+                  />
+                )}
                 {showLabel && (
-                  <text
-                    x={n.at.x + labelOffset}
-                    y={n.at.y + 3}
-                    fontSize={fontSize}
-                    fill="rgba(255,255,255,0.85)"
-                    style={{ userSelect: "none" }}
-                  >
-                    {label}
-                  </text>
+                  <>
+                    {/* Label shadow for better readability */}
+                    <text
+                      x={n.at.x + labelOffset + 1}
+                      y={n.at.y + 4}
+                      fontSize={fontSize}
+                      fill="rgba(0,0,0,0.8)"
+                      style={{ userSelect: "none", fontWeight: "600" }}
+                    >
+                      {label}
+                    </text>
+                    {/* Main label */}
+                    <text
+                      x={n.at.x + labelOffset}
+                      y={n.at.y + 3}
+                      fontSize={fontSize}
+                      fill="rgba(255,255,255,0.95)"
+                      style={{ userSelect: "none", fontWeight: "600" }}
+                    >
+                      {label}
+                    </text>
+                  </>
                 )}
                 {n.explanation && (
-                  <text
-                    x={n.at.x}
-                    y={n.at.y - 12}
-                    fontSize={8}
-                    fill="rgba(255,212,59,0.9)"
-                    style={{ userSelect: "none", fontWeight: 600 }}
-                  >
-                    {n.explanation}
-                  </text>
+                  <>
+                    {/* Explanation shadow */}
+                    <text
+                      x={n.at.x + 1}
+                      y={n.at.y - nodeRadius - 3}
+                      fontSize={9}
+                      fill="rgba(0,0,0,0.8)"
+                      textAnchor="middle"
+                      style={{ userSelect: "none", fontWeight: "700" }}
+                    >
+                      {n.explanation}
+                    </text>
+                    {/* Main explanation */}
+                    <text
+                      x={n.at.x}
+                      y={n.at.y - nodeRadius - 4}
+                      fontSize={9}
+                      fill="rgba(255,212,59,0.95)"
+                      textAnchor="middle"
+                      style={{ userSelect: "none", fontWeight: "700" }}
+                    >
+                      {n.explanation}
+                    </text>
+                  </>
                 )}
               </g>
             );
@@ -175,20 +284,39 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
           {/* Explanation Points */}
           {explanationPoints.map((p, idx) => (
             <g key={`expl-${idx}`}>
+              {/* Shadow */}
+              <circle
+                cx={p.at.x + 1}
+                cy={p.at.y + 1}
+                r={5}
+                fill="rgba(0,0,0,0.4)"
+              />
+              {/* Main circle */}
               <circle
                 cx={p.at.x}
                 cy={p.at.y}
-                r={4}
-                fill="rgba(255,212,59,0.6)"
-                stroke="rgba(255,212,59,0.9)"
-                strokeWidth={1.5}
+                r={5}
+                fill="rgba(255,212,59,0.8)"
+                stroke="rgba(255,212,59,1)"
+                strokeWidth={2}
               />
+              {/* Text shadow */}
               <text
-                x={p.at.x + 8}
+                x={p.at.x + 11}
+                y={p.at.y + 5}
+                fontSize={10}
+                fill="rgba(0,0,0,0.8)"
+                style={{ userSelect: "none", fontWeight: "600" }}
+              >
+                {p.text}
+              </text>
+              {/* Main text */}
+              <text
+                x={p.at.x + 10}
                 y={p.at.y + 4}
-                fontSize={9}
-                fill="rgba(255,212,59,0.95)"
-                style={{ userSelect: "none", fontWeight: 500 }}
+                fontSize={10}
+                fill="rgba(255,212,59,0.98)"
+                style={{ userSelect: "none", fontWeight: "600" }}
               >
                 {p.text}
               </text>
