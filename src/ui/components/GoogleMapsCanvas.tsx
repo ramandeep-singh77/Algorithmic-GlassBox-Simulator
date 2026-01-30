@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import type { DrawMode, StepSnapshot } from "../../core/types";
+import { loadGoogleMapsAPI, hasGoogleMapsAPIKey } from "../../utils/googleMaps";
 
 type Props = Readonly<{
   startLatLng: { lat: number; lng: number } | null;
@@ -32,16 +33,24 @@ export function GoogleMapsCanvas({
   const visitedPolylineRef = useRef<any[]>([]);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [isLoadingAPI, setIsLoadingAPI] = useState(false);
 
   // Default center (can be made configurable)
   const defaultCenter = useMemo(() => ({ lat: 37.7749, lng: -122.4194 }), []); // San Francisco
+
+  // Check if API key is available
+  const hasAPIKey = hasGoogleMapsAPIKey();
 
   // Initialize map once
   useEffect(() => {
     if (!mapRef.current) return;
     if (mapInstanceRef.current) return; // Already initialized
+    if (!hasAPIKey) {
+      setMapError("Google Maps API key not configured. Real-world map mode is disabled.");
+      return;
+    }
 
-    let checkInterval: number | null = null;
+    setIsLoadingAPI(true);
 
     const initMap = () => {
       if (!window.google?.maps || !mapRef.current) {
@@ -61,47 +70,35 @@ export function GoogleMapsCanvas({
         mapInstanceRef.current = map;
         setIsMapLoaded(true);
         setMapError(null);
+        setIsLoadingAPI(false);
         if (onMapReady) onMapReady(map);
         return true;
       } catch (err: any) {
         console.error("Failed to initialize Google Map:", err);
         setMapError(err?.message || "Failed to load Google Maps. Check API key and billing.");
+        setIsLoadingAPI(false);
         return false;
       }
     };
 
-    // Try immediately
-    if (window.google?.maps) {
-      const success = initMap();
-      if (!success) {
-        console.error("Map initialization failed - check API key and billing");
-      }
-    } else {
-      // Wait for script to load
-      let attempts = 0;
-      checkInterval = window.setInterval(() => {
-        attempts++;
-        if (window.google?.maps) {
-          if (checkInterval) window.clearInterval(checkInterval);
-          const success = initMap();
-          if (!success) {
-            console.error("Map initialization failed - check API key and billing");
-          }
-        } else if (attempts > 100) {
-          // 10 seconds timeout
-          if (checkInterval) window.clearInterval(checkInterval);
-          setMapError(
-            "Google Maps API failed to load. Check: 1) API key is valid, 2) Maps JavaScript API is enabled, 3) Billing is enabled, 4) No domain restrictions"
-          );
-          console.error("Google Maps API failed to load after 10 seconds");
+    // Load Google Maps API dynamically
+    loadGoogleMapsAPI()
+      .then(() => {
+        const success = initMap();
+        if (!success) {
+          console.error("Map initialization failed - check API key and billing");
         }
-      }, 100);
-    }
+      })
+      .catch((err) => {
+        console.error("Failed to load Google Maps API:", err);
+        setMapError(err.message || "Failed to load Google Maps API");
+        setIsLoadingAPI(false);
+      });
 
     return () => {
-      if (checkInterval) window.clearInterval(checkInterval);
+      // Cleanup if needed
     };
-  }, []); // Only run once on mount
+  }, [hasAPIKey]); // Only run once on mount
 
   // Update click listener when drawMode changes
   useEffect(() => {
@@ -364,13 +361,28 @@ export function GoogleMapsCanvas({
       {mapError && (
         <div className="warning" style={{ marginTop: 10, background: "rgba(255,107,107,0.15)", borderColor: "rgba(255,107,107,0.3)" }}>
           {mapError}
+          {!hasAPIKey && (
+            <div style={{ marginTop: 8, fontSize: "12px" }}>
+              To enable real-world maps:
+              <br />1. Get a Google Maps API key from Google Cloud Console
+              <br />2. Set VITE_GOOGLE_MAPS_API_KEY environment variable
+              <br />3. Enable Maps JavaScript API and Directions API
+            </div>
+          )}
         </div>
       )}
-      {!isMapLoaded && !mapError && (
+      {!isMapLoaded && !mapError && hasAPIKey && (
         <div className="warning" style={{ marginTop: 10 }}>
-          {!window.google
+          {isLoadingAPI
             ? "Loading Google Maps API..."
             : "Initializing map..."}
+        </div>
+      )}
+      {!hasAPIKey && !mapError && (
+        <div className="warning" style={{ marginTop: 10, background: "rgba(255,212,59,0.15)", borderColor: "rgba(255,212,59,0.3)" }}>
+          ⚠️ Google Maps API key not configured. Real-world map mode is disabled.
+          <br />
+          <small>Set VITE_GOOGLE_MAPS_API_KEY environment variable to enable this feature.</small>
         </div>
       )}
       {isMapLoaded && (drawMode === "start" || drawMode === "goal") && (
