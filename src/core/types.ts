@@ -7,8 +7,8 @@ export type DrawMode = "walls" | "erase" | "start" | "goal";
 export type Coord = Readonly<{ x: number; y: number }>;
 export type LatLng = Readonly<{ lat: number; lng: number }>;
 
-export type EnvironmentId = "grid" | "city" | "campus" | "dungeon" | "custom" | "realworld";
-export type EnvironmentKind = "grid" | "graph" | "map";
+export type EnvironmentId = "grid" | "city" | "campus" | "dungeon" | "custom";
+export type EnvironmentKind = "grid" | "graph";
 
 export type Grid = Readonly<{
   width: number;

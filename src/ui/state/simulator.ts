@@ -24,9 +24,6 @@ export type SimulatorState = Readonly<{
   grid: Grid;
   customGraph: Graph;
   customExplanationPoints: ReadonlyArray<{ at: Coord; text: string }>;
-  realWorldStart: LatLng | null;
-  realWorldGoal: LatLng | null;
-  realWorldGraph: Graph;
   startKey: string;
   goalKey: string;
   drawMode: DrawMode;
@@ -60,9 +57,6 @@ export type SimulatorAction =
   | { type: "setEnvironment"; environmentId: EnvironmentId }
   | { type: "setCustomGraph"; graph: Graph }
   | { type: "setCustomExplanationPoints"; points: Array<{ at: Coord; text: string }> }
-  | { type: "setRealWorldStart"; lat: number; lng: number }
-  | { type: "setRealWorldGoal"; lat: number; lng: number }
-  | { type: "setRealWorldGraph"; graph: Graph }
   | { type: "setAlgorithm"; algorithm: AlgorithmId }
   | { type: "setCompareOn"; on: boolean }
   | { type: "setCompareAlgorithm"; algorithm: AlgorithmId }
@@ -80,9 +74,6 @@ export const DEFAULT_SIM: SimulatorState = {
   grid: getEnvironment("grid").grid!,
   customGraph: { directed: true, nodes: [], edges: [] },
   customExplanationPoints: [],
-  realWorldStart: null,
-  realWorldGoal: null,
-  realWorldGraph: { directed: true, nodes: [], edges: [] },
   startKey: getEnvironment("grid").defaultStartKey,
   goalKey: getEnvironment("grid").defaultGoalKey,
   drawMode: "walls",
@@ -153,32 +144,23 @@ export function simulatorReducer(
       const env = getEnvironment(
         action.environmentId,
         action.environmentId === "custom" ? state.customGraph : undefined,
-        action.environmentId === "custom" ? state.customExplanationPoints : undefined,
-        action.environmentId === "realworld" && state.realWorldStart ? state.realWorldStart : undefined,
-        action.environmentId === "realworld" && state.realWorldGoal ? state.realWorldGoal : undefined,
-        action.environmentId === "realworld" ? state.realWorldGraph : undefined
+        action.environmentId === "custom" ? state.customExplanationPoints : undefined
       );
       const nextGrid = env.kind === "grid" ? env.grid! : state.grid;
       const customGraph = action.environmentId === "custom" ? state.customGraph : { directed: true, nodes: [], edges: [] };
-      const realWorldGraph = action.environmentId === "realworld" ? state.realWorldGraph : { directed: true, nodes: [], edges: [] };
       return resetPlayback({
         ...state,
         environmentId: action.environmentId,
         grid: nextGrid,
         customGraph,
-        realWorldGraph,
         startKey:
           action.environmentId === "custom" && customGraph.nodes.length > 0
             ? customGraph.nodes[0]!.id
-            : action.environmentId === "realworld" && realWorldGraph.nodes.length > 0
-              ? realWorldGraph.nodes[0]!.id
-              : env.defaultStartKey,
+            : env.defaultStartKey,
         goalKey:
           action.environmentId === "custom" && customGraph.nodes.length > 1
             ? customGraph.nodes[1]!.id
-            : action.environmentId === "realworld" && realWorldGraph.nodes.length > 1
-              ? realWorldGraph.nodes[realWorldGraph.nodes.length - 1]!.id
-              : env.defaultGoalKey,
+            : env.defaultGoalKey,
         drawMode: env.kind === "grid" ? state.drawMode : "start",
         trace: null,
         dna: null,
@@ -186,35 +168,6 @@ export function simulatorReducer(
         compareDna: null
       });
     }
-    case "setRealWorldStart":
-      return resetPlayback({
-        ...state,
-        realWorldStart: { lat: action.lat, lng: action.lng },
-        trace: null,
-        dna: null,
-        compareTrace: null,
-        compareDna: null
-      });
-    case "setRealWorldGoal":
-      return resetPlayback({
-        ...state,
-        realWorldGoal: { lat: action.lat, lng: action.lng },
-        trace: null,
-        dna: null,
-        compareTrace: null,
-        compareDna: null
-      });
-    case "setRealWorldGraph":
-      return resetPlayback({
-        ...state,
-        realWorldGraph: action.graph,
-        startKey: action.graph.nodes.length > 0 ? action.graph.nodes[0]!.id : state.startKey,
-        goalKey: action.graph.nodes.length > 0 ? action.graph.nodes[action.graph.nodes.length - 1]!.id : state.goalKey,
-        trace: null,
-        dna: null,
-        compareTrace: null,
-        compareDna: null
-      });
     case "setCustomGraph":
       return resetPlayback({
         ...state,

@@ -287,22 +287,9 @@ const DUNGEON_GRAPH: Graph = (() => {
 export function getEnvironment(
   id: EnvironmentId,
   customGraph?: Graph,
-  customExplanationPoints?: ReadonlyArray<{ at: Coord; text: string }>,
-  realWorldStart?: LatLng,
-  realWorldGoal?: LatLng,
-  realWorldGraph?: Graph
+  customExplanationPoints?: ReadonlyArray<{ at: Coord; text: string }>
 ): Environment {
   switch (id) {
-    case "realworld":
-      return {
-        id,
-        name: "Real-World Map (Google Maps)",
-        kind: "map",
-        graph: realWorldGraph ?? { directed: true, nodes: [], edges: [] },
-        defaultStartKey: realWorldGraph?.nodes[0]?.id ?? "start",
-        defaultGoalKey: realWorldGraph?.nodes[realWorldGraph.nodes.length - 1]?.id ?? "goal",
-        explanationPoints: []
-      };
     case "city":
       return {
         id,

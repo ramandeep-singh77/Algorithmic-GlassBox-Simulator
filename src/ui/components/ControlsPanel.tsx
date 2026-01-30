@@ -85,7 +85,6 @@ export function ControlsPanel(props: Props) {
           <option value="campus">Campus Map</option>
           <option value="dungeon">Dungeon / Maze</option>
           <option value="custom">Custom Map</option>
-          <option value="realworld">Real-World Map (Google Maps)</option>
         </select>
       </div>
 

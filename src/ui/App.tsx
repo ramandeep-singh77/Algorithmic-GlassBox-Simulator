@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useReducer, useState } from "react";
+import React, { useEffect, useMemo, useReducer } from "react";
 import { GridCanvas } from "./components/GridCanvas";
 import { GraphCanvas } from "./components/GraphCanvas";
-import { GoogleMapsCanvas } from "./components/GoogleMapsCanvas";
 import { CustomMapBuilder } from "./components/CustomMapBuilder";
 import { ControlsPanel } from "./components/ControlsPanel";
 import { DataStructurePanel } from "./components/DataStructurePanel";
@@ -18,16 +17,12 @@ import { AlgorithmId, HeuristicId, LearningLevel } from "../core/types";
 import { computeAlgorithmDNA } from "../xai/dna";
 import { getEnvironment } from "../core/environments/catalog";
 import { coordOf } from "../core/grid";
-import { createGraphFromRoute } from "../core/environments/realworld";
 
 function runOnce(state: SimulatorState): SimulatorState {
   const baseEnv = getEnvironment(
     state.environmentId,
     state.environmentId === "custom" ? state.customGraph : undefined,
-    state.environmentId === "custom" ? state.customExplanationPoints : undefined,
-    state.environmentId === "realworld" && state.realWorldStart ? state.realWorldStart : undefined,
-    state.environmentId === "realworld" && state.realWorldGoal ? state.realWorldGoal : undefined,
-    state.environmentId === "realworld" ? state.realWorldGraph : undefined
+    state.environmentId === "custom" ? state.customExplanationPoints : undefined
   );
   const env = baseEnv.kind === "grid" ? { ...baseEnv, grid: state.grid } : baseEnv;
 
@@ -71,18 +66,12 @@ export function App() {
       getEnvironment(
         state.environmentId,
         state.environmentId === "custom" ? state.customGraph : undefined,
-        state.environmentId === "custom" ? state.customExplanationPoints : undefined,
-        state.environmentId === "realworld" && state.realWorldStart ? state.realWorldStart : undefined,
-        state.environmentId === "realworld" && state.realWorldGoal ? state.realWorldGoal : undefined,
-        state.environmentId === "realworld" ? state.realWorldGraph : undefined
+        state.environmentId === "custom" ? state.customExplanationPoints : undefined
       ),
     [
       state.environmentId,
       state.customGraph,
-      state.customExplanationPoints,
-      state.realWorldStart,
-      state.realWorldGoal,
-      state.realWorldGraph
+      state.customExplanationPoints
     ]
   );
   const env = useMemo(() => {
@@ -90,10 +79,8 @@ export function App() {
   }, [baseEnv, state.grid]);
 
   const isGrid = env.kind === "grid";
-  const isRealWorld = env.kind === "map";
   const startCoord = useMemo(() => (isGrid ? coordOf(state.startKey) : null), [isGrid, state.startKey]);
   const goalCoord = useMemo(() => (isGrid ? coordOf(state.goalKey) : null), [isGrid, state.goalKey]);
-  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
 
   const currentStep = useMemo(() => {
     return state.trace?.steps[state.stepIndex] ?? null;
@@ -112,30 +99,6 @@ export function App() {
     }
     dispatch(action);
   };
-
-  // Fetch route when both start and goal are set for real-world map
-  useEffect(() => {
-    if (
-      state.environmentId === "realworld" &&
-      state.realWorldStart &&
-      state.realWorldGoal &&
-      window.google &&
-      state.realWorldGraph.nodes.length === 0
-    ) {
-      setIsLoadingRoute(true);
-      createGraphFromRoute(state.realWorldStart, state.realWorldGoal)
-        .then(({ graph, startKey, goalKey }) => {
-          dispatch({ type: "setRealWorldGraph", graph });
-          dispatch({ type: "applyEdit", edit: { kind: "start", key: startKey } });
-          dispatch({ type: "applyEdit", edit: { kind: "goal", key: goalKey } });
-          setIsLoadingRoute(false);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch route:", err);
-          setIsLoadingRoute(false);
-        });
-    }
-  }, [state.environmentId, state.realWorldStart, state.realWorldGoal, state.realWorldGraph.nodes.length]);
 
   useEffect(() => {
     if (!state.isPlaying || !state.trace) return;
@@ -176,21 +139,7 @@ export function App() {
           </div>
         </div>
         <div className="gridWrap">
-          {isRealWorld ? (
-            <GoogleMapsCanvas
-              startLatLng={state.realWorldStart}
-              goalLatLng={state.realWorldGoal}
-              step={currentStep}
-              finalPath={state.trace?.path}
-              drawMode={state.drawMode}
-              onStartChange={(lat, lng) =>
-                enhancedDispatch({ type: "setRealWorldStart", lat, lng })
-              }
-              onGoalChange={(lat, lng) =>
-                enhancedDispatch({ type: "setRealWorldGoal", lat, lng })
-              }
-            />
-          ) : state.compareOn ? (
+          {state.compareOn ? (
             <div className="twoCol">
               <div className="panel" style={{ background: "transparent", border: "none" }}>
                 <div className="panelHeader" style={{ borderRadius: 14 }}>
@@ -270,11 +219,6 @@ export function App() {
                 />
               )}
             </>
-          )}
-          {isLoadingRoute && (
-            <div className="warning" style={{ marginTop: 10 }}>
-              Loading route from Google Maps...
-            </div>
           )}
         </div>
       </div>

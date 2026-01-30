@@ -43,17 +43,17 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
 
   const colors = useMemo(() => {
     return {
-      line: "rgba(255,255,255,0.3)", // Slightly more visible edges
+      line: "rgba(255,255,255,0.25)", // Subtle edges
       linePath: getCSSVar("--cellPath"),
-      node: "rgba(255,255,255,0.6)", // Default nodes - more visible but not too bright
-      visited: "rgba(124, 92, 255, 0.75)", // Purple for visited
-      frontier: "rgba(255, 212, 59, 0.8)", // Yellow/orange for frontier
-      current: "rgba(64, 192, 87, 0.85)", // Green for current
-      path: "rgba(0, 212, 255, 0.8)", // Blue for path
-      good: "#40c057", // Solid green for start
-      bad: "#ff6b6b", // Solid red for goal
-      nodeStroke: "rgba(0,0,0,0.7)", // Dark stroke for contrast
-      importantStroke: "rgba(255,255,255,0.9)" // White stroke for start/goal
+      node: "rgba(255,255,255,0.5)", // Default nodes - subtle
+      visited: "rgba(124, 92, 255, 0.9)", // Strong purple for visited
+      frontier: "rgba(255, 165, 0, 0.9)", // Strong orange for frontier
+      current: "rgba(50, 205, 50, 0.95)", // Bright green for current
+      path: "rgba(0, 191, 255, 0.9)", // Bright blue for path
+      good: "#32CD32", // Bright green for start
+      bad: "#FF4500", // Bright red-orange for goal
+      nodeStroke: "rgba(0,0,0,0.8)", // Strong stroke for definition
+      importantStroke: "rgba(255,255,255,1)" // White stroke for start/goal
     };
   }, []);
 
@@ -105,9 +105,9 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             // Only draw each undirected edge once if data contains both directions.
             if (!graph.directed && e.from > e.to) return null;
             
-            // Better edge visibility based on graph size
+            // Thinner edges for better node visibility
             const nodeCount = graph.nodes.length;
-            const edgeWidth = nodeCount > 100 ? 1 : nodeCount > 50 ? 1.5 : nodeCount > 20 ? 2 : 2.5;
+            const edgeWidth = nodeCount > 100 ? 0.8 : nodeCount > 50 ? 1 : nodeCount > 20 ? 1.2 : 1.5;
             
             return (
               <line
@@ -142,7 +142,7 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             if (!isPathEdge) return null;
             
             const nodeCount = graph.nodes.length;
-            const pathWidth = nodeCount > 100 ? 2 : nodeCount > 50 ? 2.5 : nodeCount > 20 ? 3 : 3.5;
+            const pathWidth = nodeCount > 100 ? 1.5 : nodeCount > 50 ? 2 : nodeCount > 20 ? 2.5 : 3;
             
             return (
               <line
@@ -172,25 +172,25 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             if (closed.has(k)) fill = fill; // Keep current color for closed
             if (currentKey === k) fill = colors.current;
             
-            // Special styling for start/goal
+            // Special styling for start/goal with stronger differentiation
             if (k === startKey) {
               fill = colors.good;
               stroke = colors.importantStroke;
-              strokeWidth = 2;
+              strokeWidth = 1.8;
             }
             if (k === goalKey) {
               fill = colors.bad;
               stroke = colors.importantStroke;
-              strokeWidth = 2;
+              strokeWidth = 1.8;
             }
 
             const label = n.label ?? n.id;
 
-            // Improved node sizing - balanced visibility and spacing
+            // Much smaller nodes for better differentiation
             const nodeCount = graph.nodes.length;
-            const nodeRadius = nodeCount > 100 ? 3 : nodeCount > 50 ? 3.5 : nodeCount > 20 ? 4 : 4.5;
-            const fontSize = nodeCount > 100 ? 7 : nodeCount > 50 ? 8 : nodeCount > 20 ? 9 : 10;
-            const labelOffset = nodeRadius + 2;
+            const nodeRadius = nodeCount > 100 ? 2 : nodeCount > 50 ? 2.5 : nodeCount > 20 ? 3 : 3.5;
+            const fontSize = nodeCount > 100 ? 6 : nodeCount > 50 ? 7 : nodeCount > 20 ? 8 : 9;
+            const labelOffset = nodeRadius + 1.5;
             
             // Show labels more intelligently
             const isImportant = k === startKey || k === goalKey || n.label !== n.id || n.explanation;
@@ -198,13 +198,13 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             
             return (
               <g key={n.id} onClick={() => onNodeClick(n.id)} style={{ cursor: drawMode === "start" || drawMode === "goal" ? "pointer" : "default" }}>
-                {/* Node shadow for better visibility */}
+                {/* Minimal shadow for definition */}
                 <circle 
-                  cx={n.at.x + 0.5} 
-                  cy={n.at.y + 0.5} 
+                  cx={n.at.x + 0.3} 
+                  cy={n.at.y + 0.3} 
                   r={nodeRadius} 
-                  fill="rgba(0,0,0,0.2)" 
-                  opacity={0.4}
+                  fill="rgba(0,0,0,0.15)" 
+                  opacity={0.3}
                 />
                 {/* Main node */}
                 <circle 
@@ -221,10 +221,10 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
                   <circle 
                     cx={n.at.x} 
                     cy={n.at.y} 
-                    r={nodeRadius - 1.5} 
+                    r={nodeRadius - 1} 
                     fill="none" 
-                    stroke="rgba(255,255,255,0.7)" 
-                    strokeWidth={0.8}
+                    stroke="rgba(255,255,255,0.8)" 
+                    strokeWidth={0.6}
                   />
                 )}
                 {showLabel && (
