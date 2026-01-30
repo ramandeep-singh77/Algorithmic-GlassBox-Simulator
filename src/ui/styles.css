@@ -1,0 +1,516 @@
+:root {
+  /* Helps form controls match our dark UI on supporting browsers */
+  color-scheme: dark;
+  --bg: #0b1020;
+  --panel: rgba(255, 255, 255, 0.06);
+  --panel2: rgba(255, 255, 255, 0.09);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.7);
+  --accent: #7c5cff;
+  --good: #40c057;
+  --warn: #ffd43b;
+  --bad: #ff6b6b;
+  --gridEmpty: rgba(255, 255, 255, 0.08);
+  --gridLine: rgba(255, 255, 255, 0.06);
+  --cellWall: rgba(255, 255, 255, 0.18);
+  --cellVisited: rgba(124, 92, 255, 0.22);
+  --cellFrontier: rgba(255, 212, 59, 0.22);
+  --cellCurrent: rgba(64, 192, 87, 0.28);
+  --cellPath: rgba(0, 212, 255, 0.22);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
+  background: radial-gradient(1200px 800px at 20% 10%, #132047, var(--bg));
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+.app {
+  display: grid;
+  /* Prevent grid items from forcing overflow by default */
+  grid-template-columns: minmax(0, 1.7fr) minmax(340px, 1fr);
+  gap: 14px;
+  padding: 14px;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.panelTitle {
+  font-weight: 650;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.panelBody {
+  padding: 12px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.gridWrap {
+  padding: 10px;
+  overflow: auto;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-content: start;
+}
+
+.controlsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+button,
+select,
+input[type="range"] {
+  font: inherit;
+}
+
+button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+select {
+  /* Windows native dropdown lists can be hard to style fully.
+     We ensure the *closed* select remains readable, and set option colors
+     so text doesn't become white-on-white in the expanded list. */
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(0, 0, 0, 0.88);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+select:disabled {
+  opacity: 0.6;
+}
+
+select option {
+  color: rgba(0, 0, 0, 0.9);
+  background: #ffffff;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 12px;
+}
+
+.small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  align-items: baseline;
+  font-size: 12.5px;
+}
+
+.kv .k {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.kv .v {
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dsItem {
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.dsItem.selected {
+  outline: 2px solid rgba(124, 92, 255, 0.8);
+  background: rgba(124, 92, 255, 0.18);
+}
+
+.dsItem.reason {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.narration {
+  line-height: 1.45;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.narration strong {
+  color: #ffffff;
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.warning {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 212, 59, 0.25);
+  background: rgba(255, 212, 59, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12.5px;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+/* Responsive layout: stack panels on smaller windows */
+@media (max-width: 1350px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .twoCol {
+    grid-template-columns: 1fr;
+  }
+  
+  .app {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .panel {
+    border-radius: 10px;
+  }
+  
+  .panelBody {
+    padding: 8px;
+    max-height: none;
+  }
+  
+  .gridWrap {
+    padding: 5px;
+  }
+}
+
+/* Enhanced Controls Panel Styling */
+.controls-container {
+  display: grid;
+  gap: 12px;
+}
+
+.control-section {
+  display: grid;
+  gap: 6px;
+}
+
+.control-select {
+  width: 100%;
+  min-height: 40px;
+  font-size: 14px;
+}
+
+.playback-controls {
+  display: grid;
+  gap: 8px;
+}
+
+.step-indicator {
+  justify-self: start;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.primary-button {
+  background: var(--accent) !important;
+  color: white !important;
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.primary-button:hover {
+  background: color-mix(in srgb, var(--accent) 80%, white) !important;
+}
+
+.comparison-controls {
+  display: grid;
+  gap: 8px;
+}
+
+.toggle-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.2s ease;
+}
+
+.toggle-button.active {
+  background: var(--good);
+  border-color: var(--good);
+  color: white;
+}
+
+.toggle-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.toggle-button.active:hover {
+  background: color-mix(in srgb, var(--good) 80%, white);
+}
+
+.heuristic-weight {
+  display: grid;
+  gap: 4px;
+}
+
+.weight-value {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.weight-slider,
+.speed-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.weight-slider::-webkit-slider-thumb,
+.speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.weight-slider::-moz-range-thumb,
+.speed-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.speed-indicator {
+  margin-left: auto;
+}
+
+.draw-controls {
+  display: grid;
+  gap: 8px;
+}
+
+.draw-mode-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.utility-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.draw-button,
+.utility-button {
+  min-height: 40px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.draw-button:hover:not(.disabled),
+.utility-button:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.draw-button.disabled,
+.utility-button.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  .controls-container {
+    gap: 10px;
+  }
+  
+  .button-group {
+    justify-content: center;
+  }
+  
+  .draw-mode-buttons {
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  
+  .utility-buttons {
+    justify-content: center;
+  }
+  
+  .settings-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .speed-indicator {
+    margin-left: 0;
+    justify-self: center;
+  }
+  
+  .comparison-controls {
+    gap: 6px;
+  }
+  
+  button {
+    min-height: 44px; /* Better touch targets */
+    font-size: 14px;
+  }
+  
+  select {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .draw-mode-buttons {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  
+  .utility-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .button-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .button-group button {
+    width: 100%;
+  }
+}
+
