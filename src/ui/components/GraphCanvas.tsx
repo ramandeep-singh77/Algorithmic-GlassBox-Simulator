@@ -43,16 +43,16 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
 
   const colors = useMemo(() => {
     return {
-      line: "rgba(255,255,255,0.35)", // Increased visibility
+      line: "rgba(255,255,255,0.3)", // Slightly more visible edges
       linePath: getCSSVar("--cellPath"),
-      node: "rgba(255,255,255,0.75)", // Much more visible default
-      visited: "rgba(124, 92, 255, 0.8)", // More opaque visited
-      frontier: "rgba(255, 212, 59, 0.85)", // More opaque frontier
-      current: "rgba(64, 192, 87, 0.9)", // More opaque current
-      path: "rgba(0, 212, 255, 0.85)", // More opaque path
+      node: "rgba(255,255,255,0.6)", // Default nodes - more visible but not too bright
+      visited: "rgba(124, 92, 255, 0.75)", // Purple for visited
+      frontier: "rgba(255, 212, 59, 0.8)", // Yellow/orange for frontier
+      current: "rgba(64, 192, 87, 0.85)", // Green for current
+      path: "rgba(0, 212, 255, 0.8)", // Blue for path
       good: "#40c057", // Solid green for start
       bad: "#ff6b6b", // Solid red for goal
-      nodeStroke: "rgba(0,0,0,0.8)", // Darker stroke for better contrast
+      nodeStroke: "rgba(0,0,0,0.7)", // Dark stroke for contrast
       importantStroke: "rgba(255,255,255,0.9)" // White stroke for start/goal
     };
   }, []);
@@ -107,7 +107,7 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             
             // Better edge visibility based on graph size
             const nodeCount = graph.nodes.length;
-            const edgeWidth = nodeCount > 100 ? 1.5 : nodeCount > 50 ? 2 : nodeCount > 20 ? 2.5 : 3;
+            const edgeWidth = nodeCount > 100 ? 1 : nodeCount > 50 ? 1.5 : nodeCount > 20 ? 2 : 2.5;
             
             return (
               <line
@@ -142,7 +142,7 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             if (!isPathEdge) return null;
             
             const nodeCount = graph.nodes.length;
-            const pathWidth = nodeCount > 100 ? 3 : nodeCount > 50 ? 4 : nodeCount > 20 ? 5 : 6;
+            const pathWidth = nodeCount > 100 ? 2 : nodeCount > 50 ? 2.5 : nodeCount > 20 ? 3 : 3.5;
             
             return (
               <line
@@ -176,21 +176,21 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             if (k === startKey) {
               fill = colors.good;
               stroke = colors.importantStroke;
-              strokeWidth = 2.5;
+              strokeWidth = 2;
             }
             if (k === goalKey) {
               fill = colors.bad;
               stroke = colors.importantStroke;
-              strokeWidth = 2.5;
+              strokeWidth = 2;
             }
 
             const label = n.label ?? n.id;
 
-            // Improved node sizing - larger and more visible
+            // Improved node sizing - balanced visibility and spacing
             const nodeCount = graph.nodes.length;
-            const nodeRadius = nodeCount > 100 ? 5 : nodeCount > 50 ? 6 : nodeCount > 20 ? 7 : 8;
-            const fontSize = nodeCount > 100 ? 8 : nodeCount > 50 ? 9 : nodeCount > 20 ? 10 : 11;
-            const labelOffset = nodeRadius + 3;
+            const nodeRadius = nodeCount > 100 ? 3 : nodeCount > 50 ? 3.5 : nodeCount > 20 ? 4 : 4.5;
+            const fontSize = nodeCount > 100 ? 7 : nodeCount > 50 ? 8 : nodeCount > 20 ? 9 : 10;
+            const labelOffset = nodeRadius + 2;
             
             // Show labels more intelligently
             const isImportant = k === startKey || k === goalKey || n.label !== n.id || n.explanation;
@@ -200,11 +200,11 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
               <g key={n.id} onClick={() => onNodeClick(n.id)} style={{ cursor: drawMode === "start" || drawMode === "goal" ? "pointer" : "default" }}>
                 {/* Node shadow for better visibility */}
                 <circle 
-                  cx={n.at.x + 1} 
-                  cy={n.at.y + 1} 
+                  cx={n.at.x + 0.5} 
+                  cy={n.at.y + 0.5} 
                   r={nodeRadius} 
-                  fill="rgba(0,0,0,0.3)" 
-                  opacity={0.5}
+                  fill="rgba(0,0,0,0.2)" 
+                  opacity={0.4}
                 />
                 {/* Main node */}
                 <circle 
@@ -221,21 +221,21 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
                   <circle 
                     cx={n.at.x} 
                     cy={n.at.y} 
-                    r={nodeRadius - 2} 
+                    r={nodeRadius - 1.5} 
                     fill="none" 
-                    stroke="rgba(255,255,255,0.6)" 
-                    strokeWidth={1}
+                    stroke="rgba(255,255,255,0.7)" 
+                    strokeWidth={0.8}
                   />
                 )}
                 {showLabel && (
                   <>
                     {/* Label shadow for better readability */}
                     <text
-                      x={n.at.x + labelOffset + 1}
-                      y={n.at.y + 4}
+                      x={n.at.x + labelOffset + 0.5}
+                      y={n.at.y + 3.5}
                       fontSize={fontSize}
-                      fill="rgba(0,0,0,0.8)"
-                      style={{ userSelect: "none", fontWeight: "600" }}
+                      fill="rgba(0,0,0,0.6)"
+                      style={{ userSelect: "none", fontWeight: "500" }}
                     >
                       {label}
                     </text>
@@ -245,7 +245,7 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
                       y={n.at.y + 3}
                       fontSize={fontSize}
                       fill="rgba(255,255,255,0.95)"
-                      style={{ userSelect: "none", fontWeight: "600" }}
+                      style={{ userSelect: "none", fontWeight: "500" }}
                     >
                       {label}
                     </text>
@@ -286,37 +286,37 @@ export function GraphCanvas({ graph, startKey, goalKey, step, drawMode, onEdit, 
             <g key={`expl-${idx}`}>
               {/* Shadow */}
               <circle
-                cx={p.at.x + 1}
-                cy={p.at.y + 1}
-                r={5}
-                fill="rgba(0,0,0,0.4)"
+                cx={p.at.x + 0.5}
+                cy={p.at.y + 0.5}
+                r={4}
+                fill="rgba(0,0,0,0.3)"
               />
               {/* Main circle */}
               <circle
                 cx={p.at.x}
                 cy={p.at.y}
-                r={5}
+                r={4}
                 fill="rgba(255,212,59,0.8)"
                 stroke="rgba(255,212,59,1)"
-                strokeWidth={2}
+                strokeWidth={1.5}
               />
               {/* Text shadow */}
               <text
-                x={p.at.x + 11}
-                y={p.at.y + 5}
-                fontSize={10}
-                fill="rgba(0,0,0,0.8)"
-                style={{ userSelect: "none", fontWeight: "600" }}
+                x={p.at.x + 8.5}
+                y={p.at.y + 4.5}
+                fontSize={9}
+                fill="rgba(0,0,0,0.6)"
+                style={{ userSelect: "none", fontWeight: "500" }}
               >
                 {p.text}
               </text>
               {/* Main text */}
               <text
-                x={p.at.x + 10}
+                x={p.at.x + 8}
                 y={p.at.y + 4}
-                fontSize={10}
+                fontSize={9}
                 fill="rgba(255,212,59,0.98)"
-                style={{ userSelect: "none", fontWeight: "600" }}
+                style={{ userSelect: "none", fontWeight: "500" }}
               >
                 {p.text}
               </text>
